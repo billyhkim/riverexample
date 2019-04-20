@@ -52,32 +52,57 @@ class Gameboard{
         if (this.buildings[building] === null) {
             return;
         }
+        var subtractAmounts = {
+
+        }
         var foodCount = 0;
         var currentFoodCount = 0;
         var buildingReq = this.buildings[building].requirements;
-        for (var key in buildingReq){
-            if (buildingReq[key] > player.storage[key] + player.storage.food){
-                return false;
-            } else if (player.storage.food){
-                if (buildingReq[key] > player.storage.food){
-                    buildingReq.food = buildingReq[key] - player.storage.food;
-                    foodCount = buildingReq[key] - player.storage.food;
-                    player.storage.food -= buildingReq[key] - player.storage.food || 1;
-                    buildingReq[key] -= foodCount|| 1;
-                } else if (buildingReq[key] === player.storage[key]){
-                    // necessary to exit out of conditional
-                } else {
-                    buildingReq.food = buildingReq[key] + currentFoodCount;
-                    currentFoodCount = buildingReq[key];
-                    foodCount += buildingReq[key] || 1;
-                    buildingReq[key] -= buildingReq[key];
+        var foodAvailable = player.getStorage().food
+        for( var resource in buildingReq){
+            if(player.getStorage()[resource] < buildingReq[resource]){
+                if(player.getStorage()[resource]+foodAvailable < buildingReq[resource]){
+                    console.error(`player needed ${buildingReq[resource]}${resource} but only had ${player.getStorage()[resource]}`)
+                    return false;                    
                 }
-                player.storage.food -= foodCount;
-                foodCount = 0;
+
+                subtractAmounts[resource] = player.getStorage()[resource];
+                var foodNeeded = buildingReq[resource] - player.getStorage()[resource]
+                console.warn(`player only had ${player.getStorage()[resource]} but needed ${buildingReq[resource]}${resource}, taking ${foodNeeded} food as well`)
+                foodAvailable-= foodNeeded;
+            } else {
+                subtractAmounts[resource] = buildingReq[resource];
             }
+            
         }
-        player.storage.food = foodCount;
-        return this.buildings[building];
+        subtractAmounts.food = foodAvailable
+        for( var resource in subtractAmounts){
+            player.updateStats(resource, buildingReq[resource], 0)
+        }
+        return true;
+        // for (var key in buildingReq){
+        //     if (buildingReq[key] > player.storage[key] + player.storage.food){
+        //         return false;
+        //     } else if (player.storage.food){
+        //         if (buildingReq[key] > player.storage.food){
+        //             buildingReq.food = buildingReq[key] - player.storage.food;
+        //             foodCount = buildingReq[key] - player.storage.food;
+        //             player.storage.food -= buildingReq[key] - player.storage.food || 1;
+        //             buildingReq[key] -= foodCount|| 1;
+        //         } else if (buildingReq[key] === player.storage[key]){
+        //             // necessary to exit out of conditional
+        //         } else {
+        //             buildingReq.food = buildingReq[key] + currentFoodCount;
+        //             currentFoodCount = buildingReq[key];
+        //             foodCount += buildingReq[key] || 1;
+        //             buildingReq[key] -= buildingReq[key];
+        //         }
+        //         player.storage.food -= foodCount;
+        //         foodCount = 0;
+        //     }
+        // }
+        // player.storage.food = foodCount;
+        // return this.buildings[building];
     }
 
     resetBuildingCards(){

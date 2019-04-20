@@ -16,6 +16,9 @@ class Player{
         };
         this.playerArea = null;
     }
+    getStorage(){
+        return this.storage;
+    }
     getTotalPoints(){
         return this.victoryPoint+this.tokenCount;
     }
