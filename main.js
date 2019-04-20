@@ -1,23 +1,36 @@
 $(document).ready(startApp);
 
 var game;
-var resources = [{
-    clay: 9,
-    limit: 4
-},
-{
-    wood: 9,
-    limit: 1
-},
-{
-    stone: 9,
-    limit: 1
-},
-{
-    food: 4,
-    limit: Infinity
-}
-];
+var resources = {
+    clay: {
+        count: 9,
+        maxCount: 9,
+        playerLimit: 2,
+        awardForFirst: 2,
+        currentPlayers: []
+    },
+    wood: {
+        count: 9,
+        maxCount: 9,
+        playerLimit: 2,
+        awardForFirst: 2,
+        currentPlayers: []
+    },
+    stone: {
+        count: 9,
+        maxCount: 9,
+        playerLimit: 2,
+        awardForFirst: 2,
+        currentPlayers: []
+    },
+    food: {
+        count: 9,
+        maxCount: 9,
+        playerLimit: 2,
+        awardForFirst: 1,
+        currentPlayers: []
+    }
+};
 
 var buildings = [
 {
@@ -91,5 +104,6 @@ var tokens = [1,2,3,4,5,6];
 
 function startApp(){
     game = new Game( resources, buildings, tokens);
+    game.addPlayer('blue');
     // game.startGame();
 }

@@ -22,37 +22,62 @@ class Game {
     }
 
     addEventListener(){
-        $('.clay').click( this.checkResources );
-        $('.wood').click( this.checkResources );
-        $('.stone').click( this.checkResources );
-        $('.food').click( this.checkResources );
-        $('.building1').click( this.checkBuildingRequirement );
+        $('.resourceContainer').click( this.checkResources );
+        // $('.wood').click( this.checkResources );
+        // $('.stone').click( this.checkResources );
+        // $('.food').click( this.checkResources );
+        $('.buildingsContainer > div').click( this.checkBuildingRequirement );
         $('.building2').click( this.checkBuildingRequirement );
         $('.building3').click( this.checkBuildingRequirement );
         $('.reset-button').click( this.gameRefresh );
     }
 
     checkResources(){
-        var resource = $(event.currentTarget).children().attr('class');
-        var resourceName = $(event.currentTarget)[0].className;
-        if (resource === 'clay' && this.resources[0][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[0].limit){
-            this.resourceClicked( resource , 0);
-        } else if (resource === 'wood' && this.resources[1][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[1].limit){
-            this.resourceClicked( resource , 1 );
-        }   else if (resource === 'stone' && this.resources[2][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[2].limit){
-            this.resourceClicked( resource , 2);
-        }  else if (resource === 'food' && this.resources[3][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[3].limit){
-            this.resourceClicked( resource , 3);
+        var resourceName = $(event.currentTarget).attr('data-resource');
+        var resource = this.resources[resourceName];
+        if(resource.playerLimit === resource.currentPlayers.length){
+            console.error('too many players here');
+            return;
         }
+        if(resource.count===0){
+            console.error('there are no more ' + resourceName + ' left');
+            return;
+        }
+        var award = 1;
+        if(resource.currentPlayers.length===0){
+            console.log('first player, so getting '+ resource.awardForFirst)
+            award = resource.awardForFirst;
+        }
+        if(resource.count < award){
+            console.warn(`trying to take ${award} from ${resourceName}, but there is only ${resource.count}`)
+            award = resource.count;
+        }
+        if(this.players[this.playerTurnIndex].storageCount < award) {
+            console.warn(`current player could not store ${award}, can only store ${this.players[this.playerTurnIndex].storageCount}.  Only taking ${this.players[this.playerTurnIndex].storageCount}`);
+            award = this.players[this.playerTurnIndex].storageCount;
+        }
+        resource.currentPlayers.push(this.players[this.playerTurnIndex]);
+        this.resourceClicked( resourceName , award)
+        // if (resource === 'clay' && this.resources[0][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[0].limit){
+        //     this.resourceClicked( resource , 0);
+        // } else if (resource === 'wood' && this.resources[1][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[1].limit){
+        //     this.resourceClicked( resource , 1 );
+        // }   else if (resource === 'stone' && this.resources[2][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[2].limit){
+        //     this.resourceClicked( resource , 2);
+        // }  else if (resource === 'food' && this.resources[3][resource] > 0 && this.players[this.playerTurnIndex].storageCount > 0 && this.resources[3].limit){
+        //     this.resourceClicked( resource , 3);
+        // }
     }
 
-    resourceClicked( resource , index ){
-        this.resources[index][resource] = this.resources[index][resource] - 1;
-        this.resources[index].limit = this.resources[index].limit - 1;
-        console.log(this.resources[index].limit);
-        $(".resources").find('span.'+resource).text(this.resources[index][resource]);
-        $(".resources").find('span.'+resource+'limit').text(this.resources[index].limit);
-        this.players[this.playerTurnIndex].updateStats(resource, 1, -1);
+    resourceClicked( resourceName , count ){
+        var resource = this.resources[resourceName];
+        resource.count-=count;
+        console.log(`taking ${count} ${resourceName}, now at ${resource.count}`);
+        $('.resourceContainer[data-resource='+resourceName+'] .resourceCount').text( resource.count )
+        // $(".resources").find('span.'+resource).text(this.resources[index][resource]);
+        $('.resourceContainer[data-resource='+resourceName+'] .spotCount').text( resource.playerLimit - resource.currentPlayers.length )
+        // $(".resources").find('span.'+resource+'limit').text(this.resources[index].limit);
+        this.players[this.playerTurnIndex].updateStats(resourceName, count, -1);
         this.gotoNextPlayer();
     }
 
@@ -78,24 +103,12 @@ class Game {
         $(event.currentTarget).children().fadeOut(500);
     }
 
-    updateBuyback( key, buildingData){
+    updateBuyback( resourceName, buildingData){
         var index = null;
-        switch(key){
-            case 'clay':
-                index = 0;
-                break;
-            case 'wood':
-                index = 1;
-                break;
-            case 'stone':
-                index = 2;
-                break;
-            case 'food':
-                index = 3;
-                break;
-        }
-        this.resources[index][key] += buildingData[key];
-        $(".resources").find('span.'+key).text(this.resources[index][key]);
+
+        this.resources[resourceName].count += buildingData[resourceName];
+        $('.resourceContainer[data-resource='+resourceName+'] .resourceCount').text( resource.count )
+        //$(".resources").find('span.'+key).text(this.resources[index][key]);
     }
     
     gotoNextPlayer(){
@@ -103,28 +116,35 @@ class Game {
             this.resetTurn();
             this.resetResourceLimit();
             this.gameBoard.resetBuildingCards();
-        } else if( this.players[0].buildingsMade === 2 || this.players[1].buildingsMade === 2 ){
+        } else if( this.players[this.playerTurnIndex].buildingsMade === 2  ){
             var message = '';
-            if( this.players[0].victoryPoint + this.players[0].tokenCount > this.players[1].victoryPoint + this.players[1].tokenCount ){
-                message = 'Player 1';    
-            } else {
-                message = 'Player 2';
-            }
-            this.gameWin(message);
+            this.gameWin();
+            return;
         }
         this.playerTurnIndex++;
+
         if(this.playerTurnIndex === this.players.length){
             this.playerTurnIndex = 0;
-            $('span.blue').text('Player 1 Turn');
-            $('span.yellow').text('Player 2');
-            return;
+            // $('span.blue').text('Player 1 Turn');
+            // $('span.yellow').text('Player 2');
+            // return;
         } 
-        $('span.yellow').text('Player 2 Turn');
-        $('span.blue').text('Player 1');
+        // $('span.yellow').text('Player 2 Turn');
+        // $('span.blue').text('Player 1');
+        for( var i = 0; i< this.players.length; i++){
+            this.players[i].makeInactive();
+        }
+        this.players[this.playerTurnIndex].makeActive();
     }
 
     gameWin(message){
-        $('.message').text(message + ' congrats! You have conquered The River!');
+        var highestPlayer = 0;
+        for( var playerI = 1; playerI < this.players.length; playerI++){
+            if(this.players[highestPlayer].getTotalPoints() < this.players[playerI].getTotalPoints()){
+                highestPlayer = playerI;
+            }
+        }
+        $('.message').text(message + ' congrats! '+this.players[highestPlayer].name +(highestPlayer+1)+' You have conquered The River!');
         $('.congrats-modal').fadeIn();
  
     }

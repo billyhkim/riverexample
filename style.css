@@ -73,6 +73,10 @@ body{
   width: 100%;
   display: flex;
 }
+.active{
+  border: 4px inset red;
+  box-sizing: border-box;
+}
 .templateArea{
   display: none;
 }

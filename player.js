@@ -1,5 +1,6 @@
 class Player{
     constructor(color){
+        this.name = 'player';
         this.color = color;
         this.victoryPoint = 0;
         this.tokenCount = 0;
@@ -15,7 +16,9 @@ class Player{
         };
         this.playerArea = null;
     }
-
+    getTotalPoints(){
+        return this.victoryPoint+this.tokenCount;
+    }
     updateStats( resource, delta, workerAdjust ){
         if(workerAdjust!==undefined){
             this.pioneers+=workerAdjust;
@@ -24,7 +27,12 @@ class Player{
         this.storageCount-=delta;
         this.renderDomElements( resource );
     }
-
+    makeActive(){
+        this.playerArea.addClass('active');
+    }
+    makeInactive(){
+        this.playerArea.removeClass('active');
+    }
     addBuildingsMade(){
         this.buildingsMade++;
         this.renderDomElements();
